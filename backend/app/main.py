@@ -7,11 +7,21 @@ from app.core.database import connect_db, disconnect_db
 from app.api import auth as auth_router
 from app.api import environmental as environmental_router
 from app.api import governance as governance_router
-
+from app.api import social as social_router
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect_db()
+    if settings.CLOUDINARY_CLOUD_NAME and settings.CLOUDINARY_API_KEY and settings.CLOUDINARY_API_SECRET:
+        cloudinary.config(
+            cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+            api_key=settings.CLOUDINARY_API_KEY,
+            api_secret=settings.CLOUDINARY_API_SECRET,
+            secure=True
+        )
     yield
     await disconnect_db()
 
@@ -36,7 +46,7 @@ app.add_middleware(
 app.include_router(auth_router.router, prefix="/api/v1")
 app.include_router(environmental_router.router, prefix="/api/v1")
 app.include_router(governance_router.router, prefix="/api/v1")
-
+app.include_router(social_router.router, prefix="/api/v1")
 
 # ── Health ────────────────────────────────────────────────────────────────────
 @app.get("/")

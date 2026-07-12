@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     ALLOWED_EMAIL_DOMAIN: str = "odoo.com"
     MIN_EMAIL_LOCAL_LENGTH: int = 3  # at least 3 chars before @
 
+    # ── Cloudinary ────────────────────────────────────────────────────────
+    CLOUDINARY_CLOUD_NAME: str | None = None
+    CLOUDINARY_API_KEY: str | None = None
+    CLOUDINARY_API_SECRET: str | None = None
+
     # ── App ───────────────────────────────────────────────────────────────
     APP_ENV: str = "development"
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]

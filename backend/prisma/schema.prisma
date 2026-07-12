@@ -242,9 +242,14 @@ model User {
   passwordHash String
   role         Role          @default(EMPLOYEE)
   status       AccountStatus @default(PENDING)
-  departmentId String?
-  xp           Int           @default(0)
-  points       Int           @default(0)
+  departmentId   String?
+  xp             Int           @default(0)
+  points         Int           @default(0)
+
+  // Diversity fields
+  gender         String?
+  age            Int?
+  seniorityLevel String?
 
   // Relations
   department   Department? @relation("UserDept", fields: [departmentId], references: [id])
