@@ -1,22 +1,11 @@
-import { SubTabs } from "@/components/sub-tabs";
 import { ActionCard } from "@/components/action-card";
 import { CardGrid } from "@/components/card-grid";
 import { Recycle, Bike, Zap, Leaf, Users, Flame, Lock, Trophy, TreePine, Coffee, HeartHandshake, Filter } from "lucide-react";
 import { mockChallenges, mockBadges, mockLeaderboard, mockRewards, userBalance } from "@/lib/mock-data/gamification";
 
-const TABS = [
-  { name: "Challenges", href: "/gamification" },
-  { name: "Challenge Participation", href: "/gamification/participation" },
-  { name: "Badges", href: "/gamification/badges" },
-  { name: "Rewards", href: "/gamification/rewards" },
-  { name: "Leaderboard", href: "/gamification/leaderboard" },
-];
-
 export default function GamificationPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#F8F9FB]">
-      <SubTabs tabs={TABS} activeTabName="Challenges" />
-
       <main className="flex-1 p-8">
         {/* Active Challenges Section */}
         <div className="mb-8">
