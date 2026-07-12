@@ -1,0 +1,64 @@
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+
+# Virtual environment
+venv/
+env/
+.venv/
+.env/
+
+# FastAPI / Uvicorn logs
+*.log
+
+# Coverage and testing
+.coverage
+htmlcov/
+.cache/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+
+# Build and distribution
+build/
+dist/
+*.spec
+
+# IDE / Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env.local
+.env.dev
+.env.prod
+.env.test
+
+# Migrations (if using Alembic, keep versions folder tracked but ignore cache)
+alembic.ini
+alembic/versions/*.pyc
+alembic/versions/__pycache__/
+
+# Docker
+*.pid
+*.seed
+*.pid.lock
+
+# MyPy / Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pydantic compiled schemas
+*.schema.json
