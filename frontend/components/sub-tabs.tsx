@@ -5,7 +5,7 @@ interface SubTabsProps {
   activeTabName?: string;
 }
 
-export function SubTabs({ tabs, activeTabName }: SubTabsProps) {
+export function SubTabs({ tabs, activeTabName, activeColor = "#EA580C" }: SubTabsProps & { activeColor?: string }) {
 
   return (
     <div className="border-b border-[#E2E8F0] bg-white">
@@ -17,9 +17,10 @@ export function SubTabs({ tabs, activeTabName }: SubTabsProps) {
               <Link
                 key={tab.name}
                 href={tab.href}
+                style={isActive ? { borderColor: activeColor, color: activeColor } : {}}
                 className={`whitespace-nowrap border-b-2 py-4 text-[14px] font-medium transition-colors ${
                   isActive
-                    ? "border-[#EA580C] text-[#EA580C]"
+                    ? ""
                     : "border-transparent text-[#707A6C] hover:border-[#E1E2E4] hover:text-[#191C1E]"
                 }`}
               >
