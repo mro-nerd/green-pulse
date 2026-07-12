@@ -1,4 +1,4 @@
-# Green-Pulse — Full Build Specification
+# EcoSphere — Full Build Specification
 
 Based on the 7-screen mockup: Dashboard, Environmental, Social, Governance, Gamification, Reports, Settings.
 
@@ -6,20 +6,22 @@ Based on the 7-screen mockup: Dashboard, Environmental, Social, Governance, Gami
 
 ## 1. Tech Stack (full build, no time constraint)
 
-| Layer                     | Choice                                                                                                                        | Reasoning                                                                                                                                   |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Frontend                  | Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui                                                                   | Matches mockup's tabbed, card-heavy layout well; you already know this stack (Workbench)                                                    |
-| Charts                    | Recharts (trend lines, bar rankings) + Tremor for KPI tiles                                                                   | Matches Dashboard tile + Emissions Trend + Dept Ranking bar chart directly                                                                  |
-| Core Backend              | **FastAPI (Python)**                                                                                                          | Owns: Environmental, Social, Governance, Gamification, Reports, Settings, AI features, orchestration (Unified Monolith for hackathon speed) |
-| Database                  | PostgreSQL (single instance)                                                                                                  | Relational fits Master/Transactional model in the doc exactly                                                                               |
-| Cache / Leaderboard store | Redis (sorted sets for Leaderboard, dept rankings; pub/sub for notification fanout)                                           | FastAPI owns Redis interactions for gamification                                                                                            |
-| Auth                      | **Custom JWT auth** — see Section 3                                                                                           | RBAC maps directly to Departments/roles in the doc                                                                                          |
-| File storage              | S3-compatible (Cloudflare R2 / MinIO if self-hosting)                                                                         | CSR proof uploads, badge icons, audit attachments                                                                                           |
-| Background jobs           | Celery + Redis broker (Python side) for scheduled jobs: overdue compliance flagging, auto emission calc, badge sweep fallback |                                                                                                                                             |
-| Notifications             | Resend/SendGrid (email) + WebSocket (in-app, via FastAPI's native WS support)                                                 | Matches "Recent Activity" feed + notification settings screen                                                                               |
-| Reports export            | WeasyPrint (PDF), openpyxl (Excel), pandas (CSV)                                                                              | Matches Custom Report Builder's 3 export buttons                                                                                            |
-| AI layer                  | Anthropic/OpenAI API, called from FastAPI                                                                                     | Compliance issue summarization, NL report filters — see Section 8                                                                           |
-| Deployment                | Docker Compose (all services) → Railway/Fly.io for demo, or k8s if you want to show that skill                                |                                                                                                                                             |
+| Layer | Choice | Reasoning |
+|---|---|---|
+| Frontend | Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui | Matches mockup's tabbed, card-heavy layout well; you already know this stack (Workbench) |
+| Charts | Recharts (trend lines, bar rankings) + Tremor for KPI tiles | Matches Dashboard tile + Emissions Trend + Dept Ranking bar chart directly |
+| Core Backend | **FastAPI (Python)** | Owns: Environmental, Social, Governance, Reports, Settings, AI features, orchestration |
+| Secondary Service | **Go + GoFiber** | Owns: Gamification engine (XP/badges/leaderboard) + Carbon Transaction ingestion — both are high-throughput, latency-sensitive paths where Go's concurrency model pays off, and it's a good "polyglot" story for interviews |
+| Inter-service comm | REST internally, or NATS/simple HTTP calls (skip gRPC unless you want the complexity) | FastAPI calls Go service for XP/leaderboard writes and carbon transaction bulk inserts |
+| Database | PostgreSQL (single instance, shared by both services — no schema duplication) | Relational fits Master/Transactional model in the doc exactly |
+| Cache / Leaderboard store | Redis (sorted sets for Leaderboard, dept rankings; pub/sub for notification fanout) | Go service owns Redis interactions for gamification |
+| Auth | **Custom JWT auth** — see Section 3 | RBAC maps directly to Departments/roles in the doc |
+| File storage | S3-compatible (Cloudflare R2 / MinIO if self-hosting) | CSR proof uploads, badge icons, audit attachments |
+| Background jobs | Celery + Redis broker (Python side) for scheduled jobs: overdue compliance flagging, auto emission calc, badge sweep fallback | |
+| Notifications | Resend/SendGrid (email) + WebSocket (in-app, via FastAPI's native WS support) | Matches "Recent Activity" feed + notification settings screen |
+| Reports export | WeasyPrint (PDF), openpyxl (Excel), pandas (CSV) | Matches Custom Report Builder's 3 export buttons |
+| AI layer | Anthropic/OpenAI API, called from FastAPI | Compliance issue summarization, NL report filters — see Section 8 |
+| Deployment | Docker Compose (all services) → Railway/Fly.io for demo, or k8s if you want to show that skill | |
 
 ---
 
@@ -35,13 +37,19 @@ Based on the 7-screen mockup: Dashboard, Environmental, Social, Governance, Gami
                          │   FastAPI Core API     │
                          │  Auth · Env · Social    │
                          │  Governance · Reports   │
-                         │  Settings · AI · Gamif. │
+                         │  Settings · AI          │
                          └──────┬──────────┬───────┘
                                 │          │
-                       ┌────────▼───┐  ┌───▼────────────┐
-                       │   Redis    │  │   PostgreSQL    │
-                       │(leaderboard│  │  (shared DB)    │
-                       │ pub/sub)   │  └────────────────┘
+                   ┌────────────▼───┐  ┌───▼────────────┐
+                   │  Go Gamification │  │   PostgreSQL    │
+                   │  + Carbon Txn    │◄─┤  (shared DB)    │
+                   │  Service         │  └────────────────┘
+                   └────────┬─────────┘
+                             │
+                       ┌─────▼─────┐
+                       │   Redis    │
+                       │ (leaderboard,│
+                       │  pub/sub)  │
                        └────────────┘
 ```
 
@@ -54,17 +62,16 @@ Build this yourself (no Clerk/Auth0) since it's a good showcase and the domain n
 **Tables:** `users`, `roles`, `user_roles`, `refresh_tokens`
 
 **Roles (mapped to what the mockup implies):**
-
 - `super_admin` — full access, Settings screen, all departments
 - `dept_head` — full access scoped to their Department (matches "Department Head" field in Department table)
 - `employee` — Dashboard (own scores), Social (join CSR/Challenges), Gamification (own XP/badges), read-only Governance (Policy Acknowledgement only)
 - `auditor` — Governance module only (Audits, Compliance Issues), read-only elsewhere
 
 **Flow:**
-
 - Argon2/bcrypt password hashing
 - Access token (JWT, 15 min) + refresh token (httpOnly cookie, 7 days, rotated on use)
 - Middleware in FastAPI checks role + department scope on every request — e.g. a `dept_head` for Manufacturing can only write Carbon Transactions / CSR Activities tagged to Manufacturing
+- Go service validates the same JWT (shared secret/JWKS) so auth is consistent across both backends
 
 ---
 
@@ -187,9 +194,9 @@ Store snapshots in `department_scores` per period so the Dashboard's "Emissions 
 
 ---
 
-## 6. Gamification Engine (FastAPI — integrated for hackathon speed)
+## 6. Gamification Engine (Go service — owns this fully)
 
-- **XP award**: on `challenge_participation.approval_status = 'approved'`, FastAPI credits `xp_awarded` to the employee and pushes an update to Redis sorted set `leaderboard:global` and `leaderboard:dept:{id}`
+- **XP award**: on `challenge_participation.approval_status = 'approved'`, Go service credits `xp_awarded` to the employee and pushes an update to Redis sorted set `leaderboard:global` and `leaderboard:dept:{id}`
 - **Badge auto-award**: rule engine evaluates `unlock_rule` JSONB against employee's running stats (total XP, challenges completed) after every XP event — matches the "Auto-award badges on challenge completion" toggle in Settings
 - **Reward redemption**: atomic transaction — check `stock > 0` and `employee.points >= points_required`, decrement both, matches the mockup's Rewards tab (present but worth building even though not drawn in detail)
 - **Leaderboard read**: `ZREVRANGE leaderboard:global 0 9 WITHSCORES` — powers both the Gamification screen's Leaderboard table and the Dashboard's Department ESG Ranking bar chart (same underlying data, different aggregation)
@@ -210,7 +217,8 @@ Matches the 4 report cards + Custom Report Builder exactly:
 
 1. **Compliance Issue Auto-Summary**: when an Audit is closed with findings, call the LLM to summarize findings into 1-2 Compliance Issues with suggested severity — sits right on the Governance screen's "+ New Audit" flow.
 2. **Natural-language Custom Report Builder**: text box above the filter row in Reports — "show me high severity issues in Manufacturing this quarter" → LLM maps to the filter JSON, then runs the same `/reports/custom` endpoint. Directly upgrades the exact UI already in the mockup.
-3. **Anomaly detection on Carbon Transactions**: (Bonus feature) Celery task — z-score against department's rolling 90-day baseline, flag on the Environmental dashboard.
+3. **Policy Gap Detector**: RAG over `esg_policies` — flag policies missing standard clauses vs. a reference framework (GRI/ISSB summary you embed as reference docs).
+4. **Anomaly detection on Carbon Transactions**: z-score against department's rolling 90-day baseline, flag on the Environmental dashboard.
 
 ---
 
@@ -225,39 +233,23 @@ Matches Settings → Notification Settings toggles exactly:
 
 ---
 
-## 10. Build Order (Aligned with Sprint Plan)
+## 10. Build Order (no time constraint — do it right)
 
-Follow the 10-Sprint Parallel Execution plan (refer to `build_order.md` for full breakdown):
-
-- **Sprint 0**: Project Scaffolding & OpenAPI Contracts (Serial)
-- **Sprint 1**: Auth & RBAC Foundation (Settings/Departments)
-- **Sprint 2**: Environmental Module
-- **Sprint 3**: Social Module
-- **Sprint 4**: Governance Module & AI Summarize
-- **Sprint 5**: Gamification Module (built in FastAPI)
-- **Sprint 6**: Dashboard & Scoring Engine
-- **Sprint 7**: Reports Module & NL Report Builder
-- **Sprint 8**: Settings Module Completion
-- **Sprint 9**: Notifications & Real-time (WebSocket)
-- **Sprint 10**: Polish, Seed Data & Demo Prep
+1. **Foundation**: Postgres schema (all tables above), custom auth + RBAC, Departments/Categories CRUD, Settings screen wiring
+2. **Environmental module**: Emission Factors → Carbon Transactions (manual first, auto-calc toggle second) → Goals → Dashboard tile wiring
+3. **Social module**: CSR Activities → Employee Participation + approval queue → Diversity Dashboard
+4. **Governance module**: Policies → Acknowledgements → Audits → Compliance Issues (with overdue flagging job)
+5. **Go Gamification service**: stand it up as a separate service now — Challenges → Participation → XP → Badge rule engine → Redis leaderboard
+6. **Scoring engine**: wire E/S/G scores → Department Total → Overall ESG Score → Dashboard KPI tiles + trend chart
+7. **Reports**: 4 pre-built reports → Custom Report Builder → exports
+8. **AI features**: pick 2 from Section 8, build them last so they sit on top of real data
+9. **Notifications**: wire all 4 event types + WS relay
+10. **Polish**: mobile responsiveness pass, seed realistic demo data, empty states
 
 ---
 
 ## 11. New Ideas Worth Adding (beyond the doc's bonus list)
 
-- **Explainable scoring**: clicking a KPI tile shows _why_ the score is what it is (which sub-metrics dragged it down) — cheap to build since scoring engine already computes sub-components, big trust/interview-story payoff.
+- **Explainable scoring**: clicking a KPI tile shows *why* the score is what it is (which sub-metrics dragged it down) — cheap to build since scoring engine already computes sub-components, big trust/interview-story payoff.
 - **CSV/ERP import connector**: generic mapper for Carbon Transaction bulk import — sells the "plugs into any ERP" pitch from the original doc's background section.
 - **Slack/Teams webhook** for compliance alerts and badge unlocks, as an alternative notification channel.
-
----
-
-## 12. Left Out
-
-The following components and architectural decisions were originally specified in this document but have been updated or removed to align with the streamlined `build_order.md` execution plan:
-
-- **Secondary Service (Go + GoFiber)**: Originally planned to handle Gamification (XP, badges, leaderboards) and Carbon Transaction ingestion. This was cut for hackathon speed and is now built directly into the FastAPI core.
-- **Inter-service Communication (REST/NATS)**: Removed as there is no longer a separate Go service to communicate with.
-- **Go Service Authentication**: JWT validation sharing between FastAPI and Go was removed.
-- **Gamification Engine Details**: Updated to reflect FastAPI ownership instead of Go.
-- **AI Feature 3 (Policy Gap Detector)**: RAG over `esg_policies` was removed from the core build plan, focusing instead on Audit Auto-Summarize and NL Report Builder.
-- **Original Serial Build Order**: The original step-by-step build order was replaced by the 10-Sprint Parallel Execution plan (Frontend/Backend tracks) defined in `build_order.md`.
