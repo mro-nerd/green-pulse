@@ -48,7 +48,7 @@ export function AppSidebar() {
   return (
     <aside className="fixed inset-y-0 left-0 z-30 flex w-[260px] flex-col bg-[#1A202C] text-white">
       <div className="px-6 pt-7 pb-10">
-        <h1 className="text-xl font-bold tracking-tight">GreenPulse</h1>
+        <h1 className="text-xl font-bold tracking-tight">EcoSphere</h1>
         <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.05em] text-white/50">
           Enterprise ESG
         </p>
