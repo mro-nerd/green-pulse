@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.core.database import connect_db, disconnect_db
 from app.api import auth as auth_router
 from app.api import environmental as environmental_router
+from app.api import governance as governance_router
 
 
 @asynccontextmanager
@@ -34,6 +35,7 @@ app.add_middleware(
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(auth_router.router, prefix="/api/v1")
 app.include_router(environmental_router.router, prefix="/api/v1")
+app.include_router(governance_router.router, prefix="/api/v1")
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
