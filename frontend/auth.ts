@@ -49,6 +49,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
 
           const data = await res.json();
+          const setCookieHeader = res.headers.get("set-cookie");
+          let refreshToken = "";
+          if (setCookieHeader) {
+            const match = setCookieHeader.match(/refresh_token=([^;]+)/);
+            if (match) refreshToken = match[1];
+          }
+          console.log("[auth] Login setCookieHeader:", setCookieHeader);
+          console.log("[auth] Extracted refreshToken:", refreshToken ? "FOUND" : "MISSING");
 
           // Return user object — this gets passed to the jwt callback
           return {
@@ -64,6 +72,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             accessToken: data.access_token,
             // expires_in is in seconds, convert to epoch ms
             accessTokenExpires: Date.now() + data.expires_in * 1000,
+            refreshToken,
           };
         } catch (error) {
           console.error("[auth] Login failed:", error);
@@ -79,6 +88,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.accessToken = user.accessToken;
         token.accessTokenExpires = user.accessTokenExpires;
+        token.refreshToken = user.refreshToken;
         token.sub = user.id;
         token.name = user.name;
         token.email = user.email;
@@ -100,15 +110,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const res = await fetch(`${API_URL}/auth/refresh`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: token.refreshToken }),
         });
 
         if (!res.ok) {
+          const errorText = await res.text();
+          console.error(`[auth] Refresh failed with status ${res.status}:`, errorText);
           throw new Error("Refresh failed");
         }
 
         const data = await res.json();
         token.accessToken = data.access_token;
         token.accessTokenExpires = Date.now() + data.expires_in * 1000;
+        
+        // Extract new refresh token if rotated
+        const setCookieHeader = res.headers.get("set-cookie");
+        if (setCookieHeader) {
+          const match = setCookieHeader.match(/refresh_token=([^;]+)/);
+          if (match) token.refreshToken = match[1];
+        }
+
         // Update user profile from refresh response
         if (data.user) {
           token.name = data.user.name;
