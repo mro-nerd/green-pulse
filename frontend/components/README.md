@@ -10,6 +10,9 @@
 - `RecentActivity` — Activity feed with icon-typed entries (upload, alert, challenge). Takes typed array.
 - `QuickActions` — Card with 3 CTA buttons (Log Carbon Data, Start Challenge, View Reports).
 - `InsightBanner` — Purple/lavender alert banner for AI-driven insights or notifications.
+- `SubTabs` — Horizontal row of navigation tabs.
+- `ActionCard` — Standard card pattern with icon, badge, meta details, and full-width CTA button.
+- `CardGrid` — Responsive layout wrapper for displaying multiple cards.
 
 ## UI Components (shadcn/ui)
 

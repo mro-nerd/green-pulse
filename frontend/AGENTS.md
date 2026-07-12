@@ -1,10 +1,10 @@
-# AGENTS.md — EcoSphere Frontend
+# AGENTS.md — Green-Pulse Frontend
 
 This file governs any agent working in this repo. Read it fully before touching code.
 
 ## What this project is
 
-EcoSphere is an enterprise ESG management platform. The frontend is Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui. Design reference lives in `/design/DESIGN.md` — it defines the full color system, typography scale, spacing, and component rules. Every screen must be built against those tokens, not invented values. If a mockup screenshot and DESIGN.md ever disagree on a hex value or spacing number, DESIGN.md wins — the screenshots are layout/content references, the doc is the source of truth for values.
+Green-Pulse is an enterprise ESG management platform. The frontend is Next.js 14 (App Router) + TypeScript + Tailwind + shadcn/ui. Design reference lives in `DESIGN.md` — it defines the full color system, typography scale, spacing, and component rules. Every screen must be built against those tokens, not invented values. If a mockup screenshot and DESIGN.md ever disagree on a hex value or spacing number, DESIGN.md wins — the screenshots are layout/content references, the doc is the source of truth for values.
 
 Screens to build (from Stitch mockups, uploaded as PNGs when this agent is triggered):
 
