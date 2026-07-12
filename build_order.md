@@ -1,4 +1,4 @@
-# EcoSphere — Build Order & Parallel Execution Plan
+# Green-Pulse — Build Order & Parallel Execution Plan
 **Stack:** Next.js 14 (App Router + TypeScript + Tailwind + shadcn/ui) · FastAPI (Python) · PostgreSQL · Redis · Celery · S3-compatible storage
 
 > **Legend**

@@ -1,4 +1,4 @@
-# EcoSphere — Full Build Specification
+# Green-Pulse — Full Build Specification
 
 Based on the 7-screen mockup: Dashboard, Environmental, Social, Governance, Gamification, Reports, Settings.
 
