@@ -1,7 +1,9 @@
-# EcoSphere — Build Order & Parallel Execution Plan
+# Green-Pulse — Build Order & Parallel Execution Plan
+
 **Stack:** Next.js 14 (App Router + TypeScript + Tailwind + shadcn/ui) · FastAPI (Python) · PostgreSQL · Redis · Celery · S3-compatible storage
 
 > **Legend**
+>
 > - 🔴 **Blocking** — must finish before anything that depends on it starts
 > - 🟡 **Can start in parallel** — only partially depends on the other track
 > - 🟢 **Fully parallel** — zero dependency on the other track right now
@@ -10,9 +12,11 @@
 ---
 
 ## Sprint 0 — Project Scaffolding & Contracts (Day 1, ~4 hrs)
+
 > **Goal:** Both tracks can work independently after this sprint. This is the only true serial blocker.
 
 ### Must be done together (full team, ~2–3 hrs)
+
 - [ ] `[BOTH]` 🔴 Define & freeze **OpenAPI contract** for all modules (Swagger YAML/JSON). Write stubs — even empty `200 OK` responses. This is the "API as interface" that lets FE mock and BE implement simultaneously.
 - [ ] `[BOTH]` 🔴 Agree on **shared type contracts** (request/response shapes, enum values, error format `{code, message, details}`).
 - [ ] `[BOTH]` 🔴 Set up **monorepo structure**:
@@ -22,19 +26,22 @@
 - [ ] `[BOTH]` 🔴 Write & run **initial Alembic migration** (all tables from Build_Spec.md in one shot)
 
 ### Parallel after contracts are frozen
-| Backend | Frontend |
-|---|---|
+
+| Backend                                                                                     | Frontend                                                                                              |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `[BE]` Configure FastAPI app skeleton (routers, CORS, exception handlers, middleware stubs) | `[FE]` Configure Next.js app skeleton (App Router layout, global CSS/Tailwind tokens, shadcn/ui init) |
-| `[BE]` Set up SQLAlchemy models mirroring all DB tables | `[FE]` Set up **MSW (Mock Service Worker)** or a local JSON mock server using the agreed OpenAPI spec |
-| `[BE]` Set up Alembic migration workflow | `[FE]` Create shared TypeScript types from the OpenAPI contract (run `openapi-typescript`) |
-| `[BE]` Configure pytest + test DB | `[FE]` Configure Jest + React Testing Library |
+| `[BE]` Set up SQLAlchemy models mirroring all DB tables                                     | `[FE]` Set up **MSW (Mock Service Worker)** or a local JSON mock server using the agreed OpenAPI spec |
+| `[BE]` Set up Alembic migration workflow                                                    | `[FE]` Create shared TypeScript types from the OpenAPI contract (run `openapi-typescript`)            |
+| `[BE]` Configure pytest + test DB                                                           | `[FE]` Configure Jest + React Testing Library                                                         |
 
 ---
 
 ## Sprint 1 — Auth & RBAC Foundation (Day 1–2, ~6 hrs)
+
 > **Goal:** A working login/logout with JWT, role guard middleware, and the Settings shell. Every subsequent sprint depends on this.
 
 ### Backend (🔴 Blocking for all protected endpoints)
+
 - [ ] `[BE]` 🔴 `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`
   - Argon2/bcrypt password hashing
   - Access token (JWT, 15 min) + refresh token (httpOnly cookie, 7 days, rotated on use)
@@ -48,6 +55,7 @@
 - [ ] `[BE]` Settings — **Categories CRUD**: `GET/POST /categories`, `GET/PUT/DELETE /categories/{id}`
 
 ### Frontend (🟡 Can mock-develop while BE builds)
+
 - [ ] `[FE]` 🟢 Login page UI (`/login`) — email + password form, JWT storage in memory + cookie, redirect on success
 - [ ] `[FE]` 🟢 `AuthContext` + `useAuth()` hook — wraps `GET /auth/me`, persists user state
 - [ ] `[FE]` 🟢 Role-based `<RouteGuard>` component — reads role from context, redirects unauthorized access
@@ -61,9 +69,11 @@
 ---
 
 ## Sprint 2 — Environmental Module (Day 2–3, ~8 hrs)
+
 > Both tracks work **fully in parallel** here. FE uses mock data until BE endpoints land.
 
 ### Backend 🟢
+
 - [ ] `[BE]` **Emission Factors CRUD**: `GET/POST /emission-factors`, `PUT/DELETE /emission-factors/{id}`
 - [ ] `[BE]` **Product ESG Profiles CRUD**: `GET/POST /product-esg-profiles`, `PUT/DELETE /product-esg-profiles/{id}`
 - [ ] `[BE]` **Carbon Transactions**:
@@ -78,6 +88,7 @@
 - [ ] `[BE]` **Anomaly detection** (AI feature #4 bonus): Celery task — z-score vs. 90-day rolling baseline, writes flag to `carbon_transactions`
 
 ### Frontend 🟢
+
 - [ ] `[FE]` Environmental page shell (`/environmental`) with 4 sub-tabs: Emission Factors · Product ESG Profiles · Carbon Transactions · Goals
 - [ ] `[FE]` **Emission Factors tab**: filterable table + New/Edit/Delete modal (activity_type, unit, CO₂/unit, source, effective_date)
 - [ ] `[FE]` **Product ESG Profiles tab**: card grid or table + CRUD modal
@@ -88,9 +99,11 @@
 ---
 
 ## Sprint 3 — Social Module (Day 3–4, ~7 hrs)
+
 > Fully parallel across tracks.
 
 ### Backend 🟢
+
 - [ ] `[BE]` **CSR Activities CRUD**: `GET/POST /csr-activities`, `PUT/DELETE /csr-activities/{id}` (dept-scoped for Dept Manager)
 - [ ] `[BE]` **Employee Participation**:
   - `POST /csr-activities/{id}/join` → creates `employee_participation` row with `approval_status=pending`
@@ -102,6 +115,7 @@
 - [ ] `[BE]` S3 integration (presigned URL pattern for proof uploads)
 
 ### Frontend 🟢
+
 - [ ] `[FE]` Social page shell (`/social`) with 3 sub-tabs: CSR Activities · Employee Participation · Diversity Dashboard
 - [ ] `[FE]` **CSR Activities tab**: activity cards (matches mockup — title, category badge, join button, status) + New Activity modal (Admin/Manager only)
 - [ ] `[FE]` **Employee Participation tab**: approval queue table with proof thumbnail, Approve/Reject buttons (conditionally rendered by role) + proof upload modal for Employees
@@ -111,9 +125,11 @@
 ---
 
 ## Sprint 4 — Governance Module (Day 4–5, ~7 hrs)
+
 > Fully parallel across tracks.
 
 ### Backend 🟢
+
 - [ ] `[BE]` **Policies CRUD**: `GET/POST /policies`, `PUT/DELETE /policies/{id}`, `GET /policies/{id}` (Employee: read-only + acknowledge)
 - [ ] `[BE]` **Policy Acknowledgements**: `POST /policies/{id}/acknowledge` → creates `policy_acknowledgements` row; `GET /acknowledgements?dept_id=&policy_id=` (Manager: see own dept completion rate)
 - [ ] `[BE]` **Audits CRUD**: `GET/POST /audits`, `PUT/DELETE /audits/{id}` (Admin only F; Manager: V own dept)
@@ -125,6 +141,7 @@
 - [ ] `[BE]` AI Feature #1: `POST /audits/{id}/ai-summarize` → calls LLM with findings_summary text, returns suggested compliance issues with severity (called after audit status = 'completed')
 
 ### Frontend 🟢
+
 - [ ] `[FE]` Governance page shell (`/governance`) with 4 sub-tabs: Policies · Policy Acknowledgements · Audits · Compliance Issues
 - [ ] `[FE]` **Policies tab**: table with status chip + New/Edit modal + Acknowledge button (Employee view) — Version and Effective Date columns
 - [ ] `[FE]` **Policy Acknowledgements tab**: completion rate progress bar per policy + drill-down table (Manager sees own dept only)
@@ -135,9 +152,11 @@
 ---
 
 ## Sprint 5 — Gamification Module (Day 5–6, ~8 hrs)
+
 > Note: Build_Spec originally suggested a Go microservice for Gamification. For hackathon speed, implement directly in FastAPI unless you specifically want to show polyglot architecture — document the decision either way.
 
 ### Backend 🟢
+
 - [ ] `[BE]` **Challenges CRUD**: `GET/POST /challenges`, `PUT/DELETE /challenges/{id}` (lifecycle: draft → active → under_review → completed → archived)
 - [ ] `[BE]` **Challenge Participation**:
   - `POST /challenges/{id}/join` → creates `challenge_participation` row
@@ -152,6 +171,7 @@
 - [ ] `[BE]` **Leaderboard**: `GET /leaderboard?scope=global|dept` → `ZREVRANGE` from Redis
 
 ### Frontend 🟢
+
 - [ ] `[FE]` Gamification page shell (`/gamification`) with 4 sub-tabs: Challenges · Badges · Rewards · Leaderboard
 - [ ] `[FE]` **Challenges tab**: challenge cards (title, XP badge, difficulty chip, deadline, status) + Join/Submit Progress buttons + New Challenge modal (Admin/Manager) — matches mockup cards exactly
 - [ ] `[FE]` **Badges tab**: badge grid with locked/unlocked state (grayscale filter for locked) + unlock rule tooltip
@@ -162,9 +182,11 @@
 ---
 
 ## Sprint 6 — Dashboard & Scoring Engine (Day 6–7, ~6 hrs)
+
 > **Depends on:** Sprints 2–5 scoring endpoints all being live. Build the FE shell early, wire data last.
 
 ### Backend 🟡 (depends on Sprint 2–4 scoring endpoints)
+
 - [ ] `[BE]` **Scoring Engine** (nightly Celery job + on-demand endpoint):
   - `POST /scores/recalculate?dept_id=` → runs all three sub-scores, writes snapshot to `department_scores`
   - `GET /dashboard/summary` → returns overall ESG score, E/S/G sub-scores, 12-month trend array, dept ranking array (for bar chart)
@@ -172,6 +194,7 @@
 - [ ] `[BE]` `GET /dashboard/recent-activity` → last 10 notification-worthy events (approval decisions, badge awards, compliance flags) for the "Recent Activity" widget
 
 ### Frontend 🟡
+
 - [ ] `[FE]` 🟢 Dashboard page shell (`/dashboard`) — can be built immediately with mocked KPI tile data
 - [ ] `[FE]` 🟢 4 KPI tiles (Environmental Score, Social Score, Governance Score, Overall ESG Score) — match mockup card layout with score/100 display + delta vs. last period
 - [ ] `[FE]` 🟢 **Emissions Trend chart** (12-month line chart using Recharts) — mock with fake time series, wire to `dashboard/summary.trend` later
@@ -184,9 +207,11 @@
 ---
 
 ## Sprint 7 — Reports Module (Day 7–8, ~5 hrs)
+
 > Fully parallel across tracks.
 
 ### Backend 🟢
+
 - [ ] `[BE]` **4 Pre-built Reports**:
   - `GET /reports/environmental` — emissions trend, goal progress, top emitting depts
   - `GET /reports/social` — CSR participation rate, diversity metrics, approval turnaround
@@ -197,6 +222,7 @@
 - [ ] `[BE]` AI Feature #2: **NL Report Builder** — `POST /reports/nl-query` accepts `{prompt: "show high severity issues in Manufacturing this quarter"}`, LLM maps to filter JSON, calls `/reports/custom` internally, returns data + the resolved filters so user can see/edit them
 
 ### Frontend 🟢
+
 - [ ] `[FE]` Reports page shell (`/reports`) — 4 pre-built report cards + Custom Report Builder section below (matches mockup exactly)
 - [ ] `[FE]` **Pre-built Report cards**: Generate button per card, opens a modal/panel with rendered chart + table preview + export buttons (PDF · Excel · CSV)
 - [ ] `[FE]` **Custom Report Builder UI**: filter row (date range, department multi-select, module select, employee, challenge, ESG category) + NL text box above it (AI feature) + Preview table + Export buttons
@@ -207,13 +233,16 @@
 ---
 
 ## Sprint 8 — Settings Module Completion (Day 8, ~4 hrs)
+
 > Mostly FE-heavy; most BE endpoints were built in Sprint 1.
 
 ### Backend 🟡 (mostly done in Sprint 1, only ESG config remains)
+
 - [ ] `[BE]` **ESG Configuration**: `GET/PUT /settings/esg-config` — stores `{environmental_weight, social_weight, governance_weight, auto_emission_calc, evidence_required, badge_auto_award, notification_channels[]}` (the 4 toggles + 3 weights from mockup)
 - [ ] `[BE]` **Notification Settings**: `GET/PUT /settings/notifications?scope=org|dept|user` (role-scoped: Admin sets org defaults, Manager sets dept, Employee sets own)
 
 ### Frontend 🟡
+
 - [ ] `[FE]` Settings → **ESG Configuration tab**: weight sliders (must sum to 100, show live validation), 4 toggle switches — matches mockup bottom section exactly
 - [ ] `[FE]` Settings → **Notification Settings tab**: toggle grid (event type × channel: in-app / email / Slack) per role scope
 - [ ] `[FE]` Settings → **User & Role Management tab** (designed Sprint 1, wire here): role dropdown, dept assignment, CSV bulk import UX with column mapping preview
@@ -222,9 +251,11 @@
 ---
 
 ## Sprint 9 — Notifications & Real-time (Day 8–9, ~4 hrs)
+
 > Both tracks run in parallel.
 
 ### Backend 🟢
+
 - [ ] `[BE]` **WebSocket endpoint**: `WS /ws/notifications?token=` — fan-out via Redis pub/sub → each connected client gets their own channel
 - [ ] `[BE]` **Notification event emitters** wired to all trigger points:
   - Compliance issue created/overdue → notify auditor + dept head + owner
@@ -234,6 +265,7 @@
 - [ ] `[BE]` `GET /notifications` (paginated, unread first) + `POST /notifications/{id}/read`
 
 ### Frontend 🟢
+
 - [ ] `[FE]` WebSocket client hook (`useNotifications`) — connects to WS, appends to notification store
 - [ ] `[FE]` Notification bell in top bar: unread count badge, dropdown with last 5 items + "Mark all read"
 - [ ] `[FE]` Toast system (shadcn/ui `<Sonner>`) — fires on incoming WS message for badge unlocks and approval decisions
@@ -244,12 +276,14 @@
 ## Sprint 10 — Polish, Seed Data & Demo Prep (Day 9–10, ~6 hrs)
 
 ### Backend 🟢
+
 - [ ] `[BE]` Write a **seed script** (`seed.py`): 3 departments, 15–20 employees across all 3 roles, 12 months of carbon transactions (realistic variance for a good trend chart), 5 CSR activities (mix of approved/pending), 3 audits with compliance issues, 4 challenges at different lifecycle stages, 3 rewards in catalog
 - [ ] `[BE]` Run Celery scoring job over seeded data so `department_scores` has 12 months of snapshots
 - [ ] `[BE]` Add rate limiting (`slowapi`) and proper 403/404/422 error responses everywhere
 - [ ] `[BE]` Write OpenAPI description strings so the auto-generated docs are presentable for judges
 
 ### Frontend 🟢
+
 - [ ] `[FE]` **Empty states** for every list/table (icon + message + primary CTA button) — no blank white boxes
 - [ ] `[FE]` **Loading skeletons** on all data-fetching components (shadcn/ui Skeleton)
 - [ ] `[FE]` **Mobile responsiveness** pass: sidebar collapses to hamburger, tables scroll horizontally, cards stack to single column below 768px
@@ -355,10 +389,10 @@ green-pulse/
 
 ## AI Features — Build Triggers
 
-| AI Feature | When to Build | Sprint | BE Endpoint | FE Integration |
-|---|---|---|---|---|
-| **#1 Audit Auto-Summarize** | After Governance module is live | S4 | `POST /audits/{id}/ai-summarize` | "AI Summarize" button in Audit detail → slide-over panel |
-| **#2 NL Report Builder** | After Reports module is live | S7 | `POST /reports/nl-query` | Text box above Custom Report Builder filter row |
+| AI Feature                  | When to Build                   | Sprint | BE Endpoint                      | FE Integration                                           |
+| --------------------------- | ------------------------------- | ------ | -------------------------------- | -------------------------------------------------------- |
+| **#1 Audit Auto-Summarize** | After Governance module is live | S4     | `POST /audits/{id}/ai-summarize` | "AI Summarize" button in Audit detail → slide-over panel |
+| **#2 NL Report Builder**    | After Reports module is live    | S7     | `POST /reports/nl-query`         | Text box above Custom Report Builder filter row          |
 
 Both features use the same LLM client wrapper (`app/ai/client.py`). Build the wrapper in S4 and reuse it for S7.
 
@@ -366,10 +400,10 @@ Both features use the same LLM client wrapper (`app/ai/client.py`). Build the wr
 
 ## Key Decisions to Lock Before Coding
 
-| Decision | Options | Recommendation |
-|---|---|---|
-| Go Gamification service vs. FastAPI-only | Go (polyglot story) vs. FastAPI (speed) | **FastAPI-only for hackathon** unless you have 3+ devs. Document the Go option in architecture slides. |
-| MSW vs. JSON Server for FE mocking | MSW (in-process) vs. JSON Server (separate process) | **MSW** — no extra process, lives in tests too |
-| S3 provider | Cloudflare R2 (free tier) vs. MinIO (self-hosted in Docker) | **MinIO in Docker Compose** for offline demo safety |
-| Auth token storage | httpOnly cookie vs. memory + cookie hybrid | **httpOnly cookie for refresh + memory for access token** |
-| LLM provider | OpenAI GPT-4o vs. Anthropic Claude Sonnet | Either works; pick based on available API key. Abstract behind `app/ai/client.py` |
+| Decision                                 | Options                                                     | Recommendation                                                                                         |
+| ---------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Go Gamification service vs. FastAPI-only | Go (polyglot story) vs. FastAPI (speed)                     | **FastAPI-only for hackathon** unless you have 3+ devs. Document the Go option in architecture slides. |
+| MSW vs. JSON Server for FE mocking       | MSW (in-process) vs. JSON Server (separate process)         | **MSW** — no extra process, lives in tests too                                                         |
+| S3 provider                              | Cloudflare R2 (free tier) vs. MinIO (self-hosted in Docker) | **MinIO in Docker Compose** for offline demo safety                                                    |
+| Auth token storage                       | httpOnly cookie vs. memory + cookie hybrid                  | **httpOnly cookie for refresh + memory for access token**                                              |
+| LLM provider                             | OpenAI GPT-4o vs. Anthropic Claude Sonnet                   | Either works; pick based on available API key. Abstract behind `app/ai/client.py`                      |

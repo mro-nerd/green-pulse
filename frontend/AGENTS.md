@@ -2,7 +2,7 @@
 
 This file governs any agent working in this repo. Read it fully before touching code.
 
-> **Cross-team contract:** A separate backend team is building the FastAPI backend using the same `Build_Spec.md` and `build_order.md` as their source of truth. Every type, mock shape, API call signature, and auth pattern in this frontend MUST align with those documents so that wiring frontend → backend is a configuration change, not a rewrite. If something here contradicts `Build_Spec.md` or `build_order.md`, those documents win.
+> **Cross-team contract:** A separate backend team is building the FastAPI backend using the same `../docs/Build_Spec.md` and `../docs/build_order.md` as their source of truth. Every type, mock shape, API call signature, and auth pattern in this frontend MUST align with those documents so that wiring frontend → backend is a configuration change, not a rewrite. If something here contradicts `../docs/Build_Spec.md` or `../docs/build_order.md`, those documents win.
 
 ---
 
@@ -68,7 +68,7 @@ Every screen must look like it belongs to the same application. This means:
 
 ## Backend Integration Architecture
 
-> This section is the contract between frontend and backend teams. The backend team builds FastAPI endpoints, Pydantic schemas, and SQLAlchemy models against `Build_Spec.md`. The frontend must mirror those shapes exactly so wiring is trivial.
+> This section is the contract between frontend and backend teams. The backend team builds FastAPI endpoints, Pydantic schemas, and SQLAlchemy models against `../docs/Build_Spec.md`. The frontend must mirror those shapes exactly so wiring is trivial.
 
 ### API Client — `/lib/api.ts`
 
@@ -88,7 +88,7 @@ Never call `fetch()` or `axios` directly from a component. Always go through the
 
 This file contains TypeScript types that mirror the backend's Pydantic response schemas **field-for-field**. The field names use `snake_case` to match the JSON the backend sends — do NOT convert to camelCase in type definitions. If a component needs camelCase props for readability, map in the component, not in the types.
 
-The backend team's Pydantic schemas are derived from the database tables in `Build_Spec.md` Section 4. Every type defined in `/lib/types.ts` must trace back to one of those tables.
+The backend team's Pydantic schemas are derived from the database tables in `../docs/Build_Spec.md` Section 4. Every type defined in `/lib/types.ts` must trace back to one of those tables.
 
 **Required types (grouped by module, must match backend schemas):**
 
