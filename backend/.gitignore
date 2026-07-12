@@ -9,7 +9,7 @@ __pycache__/
 
 # Virtual environment
 venv/
-env/
+.env/
 .venv/
 .env/
 
@@ -44,6 +44,7 @@ Thumbs.db
 .env.dev
 .env.prod
 .env.test
+.env
 
 # Migrations (if using Alembic, keep versions folder tracked but ignore cache)
 alembic.ini
